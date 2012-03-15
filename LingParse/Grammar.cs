@@ -2,45 +2,53 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 namespace LingParse
 {
-    public enum Categories
-    {
-        None, Noun, Verb, Adjective, Preposition, Determiner, NounPhrase, VerbPhrase, PrepositionPhrase, NBar, Sentence
-    }
 
     class Grammar
-    {
-        static Grammar _default;
-
-        public static Grammar DefaultGrammar()
-        {
-            if (_default == null)
-            {
-                _default = new Grammar();
-
-                _default.Rules.Add(new GrammarDefinition(Categories.NBar, Categories.Adjective, Categories.NBar));
-                _default.Rules.Add(new GrammarDefinition(Categories.NBar, Categories.Noun, Categories.None));
-                _default.Rules.Add(new GrammarDefinition(Categories.NounPhrase, Categories.Determiner, Categories.NBar));
-                _default.Rules.Add(new GrammarDefinition(Categories.NounPhrase, Categories.NBar, Categories.None));
-                _default.Rules.Add(new GrammarDefinition(Categories.NounPhrase, Categories.NounPhrase, Categories.PrepositionPhrase));
-
-                _default.Rules.Add(new GrammarDefinition(Categories.PrepositionPhrase, Categories.Preposition, Categories.NounPhrase));
-
-                _default.Rules.Add(new GrammarDefinition(Categories.VerbPhrase, Categories.Verb, Categories.None));
-                _default.Rules.Add(new GrammarDefinition(Categories.VerbPhrase, Categories.Verb, Categories.NounPhrase));
-                _default.Rules.Add(new GrammarDefinition(Categories.VerbPhrase, Categories.VerbPhrase, Categories.PrepositionPhrase));
-
-                _default.Rules.Add(new GrammarDefinition(Categories.Sentence, Categories.NounPhrase, Categories.VerbPhrase));
-            }
-            return _default;
-        }
-
-        private Grammar()
-        {
-            Rules = new List<GrammarDefinition>();
-        }
+    {	
+		/**
+		 * File format:
+		 * 0 <parent> -> <left> <right>
+		 * 1 <parent> -> <left> <right>
+		 * ...
+		 * 
+		 * <parent>: a string in the loaded SyntaxCategories file
+		 * <left>: a string in the loaded SyntaxCategories file
+		 * <right>: a string in the loaded SyntaxCategories file
+		 * 
+		 * **/
+		public Grammar(string filename) {
+			Rules = new List<GrammarDefinition>();
+			
+			using (StreamReader sr = new StreamReader(filename))
+			{
+				String line;
+				while ((line = sr.ReadLine()) != null) {
+					if (line.Length > 0)
+					{
+						string[] components = line.Split(' ');
+						
+						if (components.Length == 4)
+						{
+							int parent = SyntaxCategories.DefaultSyntaxCategories.IndexForName(components[0]);
+							int left = SyntaxCategories.DefaultSyntaxCategories.IndexForName(components[2]);
+							int right = SyntaxCategories.DefaultSyntaxCategories.IndexForName(components[3]);
+							
+							if (parent != -1 && left != -1 && right != -1)
+								Rules.Add (new GrammarDefinition(parent, left, right));
+							else
+								throw new FormatException(String.Format ("Category name is not valid with current SyntaxCategories. Line: {0}", line));
+						}
+						else
+							throw new FormatException("Grammar entry takes only three parameters.");
+					
+					}
+				}
+			}
+		}
 
         public List<GrammarDefinition> Rules
         {
@@ -76,7 +84,7 @@ namespace LingParse
                 foreach (GrammarDefinition rule in Rules)
                 {
                     int modify = 0;
-                    if (rule.Right == Categories.None)
+                    if (rule.Right == SyntaxCategories.SYNTAX_CATEGORY_EMPTY)
                     {
                         if (rule.Left == l.Type)
                         {
@@ -99,7 +107,7 @@ namespace LingParse
                         ParseNode parent = new ParseNode(rule.Parent, null, l, modify > 1 ? r : ParseNode.EmptyParseNode());
                         modifiedInput.Insert(i, parent);
 
-                        if (modifiedInput.Count == 1 && modifiedInput[0].Type == Categories.Sentence)
+                        if (modifiedInput.Count == 1 && modifiedInput[0].Type == SyntaxCategories.SYNTAX_CATEGORY_FULL)
                             output.Add(modifiedInput);
                         else
                             work.Enqueue(modifiedInput);
@@ -117,7 +125,7 @@ namespace LingParse
 
                 foreach (GrammarDefinition rule in Rules)
                 {
-                    if (rule.Right == Categories.None)
+                    if (rule.Right == SyntaxCategories.SYNTAX_CATEGORY_EMPTY)
                     {
                         if (rule.Left == l.Type)
                         {
@@ -146,38 +154,10 @@ namespace LingParse
                 }
             }
 
-            if (input.Count == 1 && input[0].Type == Categories.Sentence)
+            if (input.Count == 1 && input[0].Type == SyntaxCategories.SYNTAX_CATEGORY_FULL)
             {
                 output.Add(input);
             }
-        }
-
-        public static string NameForUnit(Categories u)
-        {
-            switch (u)
-            {
-                case Categories.Adjective:
-                    return "Adj";
-                case Categories.Determiner:
-                    return "Det";
-                case Categories.NBar:
-                    return "N'";
-                case Categories.Noun:
-                    return "N";
-                case Categories.NounPhrase:
-                    return "NP";
-                case Categories.Preposition:
-                    return "P";
-                case Categories.PrepositionPhrase:
-                    return "PP";
-                case Categories.Sentence:
-                    return "S";
-                case Categories.Verb:
-                    return "V";
-                case Categories.VerbPhrase:
-                    return "VP";
-            }
-            return "-";
         }
     }
 }

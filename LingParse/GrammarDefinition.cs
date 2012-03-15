@@ -7,31 +7,31 @@ namespace LingParse
 {
     class GrammarDefinition
     {
-        public GrammarDefinition(Categories parent, Categories l, Categories r)
+        public GrammarDefinition(int parent, int l, int r)
         {
             Parent = parent;
             Left = l;
             Right = r;
         }
 
-        public Categories Parent {
+        public int Parent {
             get;
             private set;
         }
 
-        public Categories Left {
+        public int Left {
             get;
             private set;
         }
 
-        public Categories Right {
+        public int Right {
             get;
             private set;
         }
 
         public override string ToString()
         {
-            return String.Format("{0} -> {1} {2}", Grammar.NameForUnit(Parent), Grammar.NameForUnit(Left), Grammar.NameForUnit(Right));
+            return String.Format("{0} -> {1} {2}", SyntaxCategories.DefaultSyntaxCategories.NameForIndex(Parent), SyntaxCategories.DefaultSyntaxCategories.NameForIndex(Left), SyntaxCategories.DefaultSyntaxCategories.NameForIndex(Right));
         }
     }
 }

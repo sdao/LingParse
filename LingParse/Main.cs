@@ -7,35 +7,39 @@ namespace LingParse
 	{
 		public static void Main (string[] args)
 		{
-			string s = "The airliner collapsed on a frightened, grassy puppy.";
+			if (args[0] == "/?" || args[0] == "/help") {
+				Console.WriteLine("usage: LingParse.exe syn-file lex-file lem-file gra-file input");
+				return;
+			}
+			
+			SyntaxCategories.LoadSyntaxCategories(args[0]);
+			Lexicon lex = new Lexicon(args[1], args[2]);
+			Grammar gra = new Grammar(args[3]);
+			
+			string s;
+			if (args.Length > 4)
+				s = args[4];
+			else {
+				Console.Write("Input sentence> ");
+				s = Console.ReadLine();
+			}
 
-            Console.WriteLine("Operating with these phrase-structure rules:");
-            foreach (GrammarDefinition def in Grammar.DefaultGrammar().Rules)
-                Console.WriteLine(def);
+            List<List<ParseNode>> possibleSentences = lex.Chunk(s, true);
 
-            s = s.ToUpper();
-            char[] cArr = s.ToCharArray();
-            cArr = Array.FindAll<char>(cArr, (c => (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c) || c == '-')));
-            s = new string(cArr);
+			int count = 0;
+			foreach (List<ParseNode> sentence in possibleSentences)
+			{
+				List<List<ParseNode>> parseResults = gra.Parse(sentence);
 
-            List<List<ParseNode>> possibleSentences = Lexicon.DefaultLexicon().Chunk(s);
-            List<ParseNode> chosenSentence = possibleSentences[0];
+            	foreach (List<ParseNode> result in parseResults)
+            	{
+                	Console.WriteLine("--{0}--", ++count);
+                	Console.WriteLine(result[0]);
+					Console.WriteLine();
+            	}
+			}
 
-            Console.WriteLine("\nSentence parsed as:");
-            foreach (ParseNode n in chosenSentence)
-                Console.WriteLine(n.ToString());
-
-            List<List<ParseNode>> parseResults = Grammar.DefaultGrammar().Parse(chosenSentence);
-
-            Console.WriteLine("\nThe results were:");
-            int count = 0;
-            foreach (List<ParseNode> result in parseResults)
-            {
-                Console.WriteLine("--{0}--", ++count);
-                Console.WriteLine(result[0]);
-            }
-
-            Console.WriteLine("\nPress any key to continue...");
+            Console.WriteLine("Press any key to continue...");
             Console.ReadKey();
 		}
 	}

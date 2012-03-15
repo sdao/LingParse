@@ -2,82 +2,129 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 namespace LingParse
 {
     class Lexicon
     {
-        static Lexicon _default;
-
-        public static Lexicon DefaultLexicon()
-        {
-            if (_default == null)
-            {
-                _default = new Lexicon();
-
-                _default.Add("a", Categories.Determiner);
-                _default.Add("the", Categories.Determiner);
-
-                _default.Add("airliner", Categories.Noun);
-                _default.Add("box", Categories.Noun);
-                _default.Add("cams", Categories.Noun);
-                _default.Add("car", Categories.Noun);
-                _default.Add("child", Categories.Noun);
-                _default.Add("children", Categories.Noun);
-                _default.Add("hill", Categories.Noun);
-                _default.Add("house", Categories.Noun);
-                _default.Add("ice", Categories.Noun);
-                _default.Add("lane", Categories.Noun);
-                _default.Add("passenger", Categories.Noun);
-                _default.Add("puppy", Categories.Noun);
-                _default.Add("sun", Categories.Noun);
-                _default.Add("toy", Categories.Noun);
-                _default.Add("tree", Categories.Noun);
-                _default.Add("wind", Categories.Noun);
-
-                _default.Add("collapsed", Categories.Verb);
-                _default.Add("found", Categories.Verb);
-                _default.Add("landed", Categories.Verb);
-                _default.Add("melted", Categories.Verb);
-                _default.Add("put", Categories.Verb);
-                _default.Add("sped", Categories.Verb);
-                _default.Add("swayed", Categories.Verb);
-
-                _default.Add("crippled", Categories.Adjective);
-                _default.Add("fast", Categories.Adjective);
-                _default.Add("frightened", Categories.Adjective);
-                _default.Add("grassy", Categories.Adjective);
-                _default.Add("hot", Categories.Adjective);
-                _default.Add("old", Categories.Adjective);
-                _default.Add("small", Categories.Adjective);
-                _default.Add("twin", Categories.Adjective);
-
-                _default.Add("by", Categories.Preposition);
-                _default.Add("in", Categories.Preposition);
-                _default.Add("on", Categories.Preposition);
-                _default.Add("with", Categories.Preposition);
-            }
-            return _default;
-        }
-
-        private Lexicon() {
-            Library = new Dictionary<string, HashSet<Categories>>();
-        }
-
-        public Dictionary<string, HashSet<Categories>> Library
+		/**
+		 * Dictionary file format:
+		 * 0 <word>	(tab)	<tag*>
+		 * 1 <word>	(tab)	<tag*>
+		 * ...
+		 * 
+		 * <word>: any alphanumeric Unicode string
+		 * <tag*>: one or more characters defined as category synonyms
+		 * 
+		 * Morphology file format:
+		 * 0 -<suffix>	(tab)	<tag*>
+		 * 1 <prefix>-	(tab)	<tag*>
+		 * ...
+		 * 
+		 * <suffix>|<prefix>: any alphanumeric Unicode string
+		 * <tag*>: one or more characters defined as category synonyms
+		 * 
+		 * **/
+		public Lexicon(string dictFilename, string morphFilename) {
+			Library = new Dictionary<string, HashSet<int>>();
+			MorphologyPrefixes = new Dictionary<string, HashSet<int>>();
+			MorphologySuffixes = new Dictionary<string, HashSet<int>>();
+			
+			using (StreamReader sr = new StreamReader(dictFilename))
+			{
+				String line;
+				while ((line = sr.ReadLine()) != null) {
+					if (line.Length > 0)
+					{
+						string[] components = line.Split('\t');
+						
+						if (components.Length == 2)
+						{
+							for (int i = 0; i < components[1].Length; i++) {
+								string x = components[1].Substring(i, 1);
+								int category = SyntaxCategories.DefaultSyntaxCategories.IndexForName(x);
+								
+								if (category > SyntaxCategories.SYNTAX_CATEGORY_NOT_IMPLEMENTED)
+									Add (components[0], category);
+								
+								if (category == -1 && x != SyntaxCategories.SYNTAX_FILE_EXCLUDE)
+									throw new FormatException(String.Format ("Category name is not valid with current SyntaxCategories. Line: {0}; Name: {1}", line, x));
+							}
+						}
+						else
+							throw new FormatException(String.Format("Word entry takes only two parameters. Line: {0}", line));
+					}
+				}
+			}
+			
+			using (StreamReader sr = new StreamReader(morphFilename))
+			{
+				String line;
+				while ((line = sr.ReadLine()) != null) {
+					if (line.Length > 0)
+					{
+						string[] components = line.Split('\t');
+						
+						if (components.Length == 2)
+						{
+							string name = components[0];
+							bool isPrefix = (name.Substring (name.Length - 1) == "-");
+							if (isPrefix) {
+								name = name.Substring (0, name.Length - 1);
+							} else {
+								name = name.Substring (1);
+							}
+							
+							for (int i = 0; i < components[1].Length; i++) {
+								string x = components[1].Substring(i, 1);
+								int category = SyntaxCategories.DefaultSyntaxCategories.IndexForName(x);
+								
+								if (category >= SyntaxCategories.SYNTAX_CATEGORY_NOT_IMPLEMENTED) {
+									if (isPrefix) {
+										AddPrefix (name, category);
+									}
+									else {
+										AddSuffix (name, category);
+									}
+								}
+								else
+									throw new FormatException(String.Format ("Category name is not valid with current SyntaxCategories. Line: {0}; Name: {1}", line, x));
+							}
+						}
+						else
+							throw new FormatException(String.Format("Word entry takes only two parameters. Line: {0}", line));
+					}
+				}
+			}
+		}
+		
+        public Dictionary<string, HashSet<int>> Library
         {
             get;
             private set;
         }
+		
+		public Dictionary<string, HashSet<int>> MorphologyPrefixes
+		{
+			get;
+			private set;
+		}
+		
+		public Dictionary<string, HashSet<int>> MorphologySuffixes
+		{
+			get;
+			private set;
+		}
 
-        public bool Add(string t, Categories category)
+        public bool Add(string t, int category)
         {
             string term = t.ToUpper();
 
-            HashSet<Categories> categorySet;
+            HashSet<int> categorySet;
             if (!Library.ContainsKey(term))
             {
-                categorySet = new HashSet<Categories>();
+                categorySet = new HashSet<int>();
                 Library.Add(term, categorySet);
             }
             else
@@ -87,8 +134,44 @@ namespace LingParse
 
             return categorySet.Add(category);
         }
+		
+		public bool AddPrefix(string t, int category)
+        {
+            string term = t.ToUpper();
 
-        public bool Remove(string t, Categories category)
+            HashSet<int> categorySet;
+            if (!MorphologyPrefixes.ContainsKey(term))
+            {
+                categorySet = new HashSet<int>();
+                MorphologyPrefixes.Add(term, categorySet);
+            }
+            else
+            {
+                categorySet = MorphologyPrefixes[term];
+            }
+
+            return categorySet.Add(category);
+        }
+		
+		public bool AddSuffix(string t, int category)
+        {
+            string term = t.ToUpper();
+
+            HashSet<int> categorySet;
+            if (!MorphologySuffixes.ContainsKey(term))
+            {
+                categorySet = new HashSet<int>();
+                MorphologySuffixes.Add(term, categorySet);
+            }
+            else
+            {
+                categorySet = MorphologySuffixes[term];
+            }
+
+            return categorySet.Add(category);
+        }
+
+        public bool Remove(string t, int category)
         {
             string term = t.ToUpper();
 
@@ -98,7 +181,7 @@ namespace LingParse
             }
             else
             {
-                HashSet<Categories> categorySet = Library[term];
+                HashSet<int> categorySet = Library[term];
                 bool removed = categorySet.Remove(category);
                 if (categorySet.Count == 0)
                 {
@@ -127,22 +210,65 @@ namespace LingParse
             }
         }
 
-        public bool Contains(string t)
+        public bool Contains(string t, out string stem, out IEnumerable<int> types)
         {
             string term = t.ToUpper();
-
-            return Library.ContainsKey(term);
+			stem = null;
+			types = null;
+			
+			if (Contains(term)) {
+				stem = term;
+				types = GetTypes(term);
+				return true;
+			}
+			
+            foreach (string prefix in MorphologyPrefixes.Keys) {
+				if (term.StartsWith (prefix) && term.Length > prefix.Length) {
+					stem = term.Substring (prefix.Length);
+					
+					if (Contains(stem)) {
+						types = MorphologyPrefixes[prefix].Intersect(Library[stem]);
+						foreach (int x in types)
+							return true;
+					}
+				}
+			}
+			
+			foreach (string suffix in MorphologySuffixes.Keys) {
+				if (term.EndsWith(suffix) && term.Length > suffix.Length) {
+					stem = term.Substring(0, term.Length - suffix.Length);
+					
+					if (Contains(stem)) {
+						types = MorphologySuffixes[suffix].Intersect(Library[stem]);
+						foreach (int x in types)
+							return true;
+					}
+				}
+			}
+			
+			return false;
         }
-
-        public HashSet<Categories> GetTypes(string t)
+		
+		public bool Contains(string t) {
+			return Library.ContainsKey(t);
+		}
+		
+        public HashSet<int> GetTypes(string t)
         {
             string term = t.ToUpper();
 
             return Library[term];
         }
 
-        public List<List<ParseNode>> Chunk(string input)
+        public List<List<ParseNode>> Chunk(string input, bool sanitize)
         {
+			if (sanitize) {
+				input = input.ToUpper();
+            	char[] cArr = input.ToCharArray();
+            	cArr = Array.FindAll<char>(cArr, (c => (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c) || c == '-')));
+            	input = new string(cArr);
+			}
+			
             string[] words = input.Split(' ');
             List<List<ParseNode>> output = new List<List<ParseNode>>();
 
@@ -160,9 +286,15 @@ namespace LingParse
             else
             {
                 string word = words[chain.Count];
-                HashSet<Categories> availableTypes = GetTypes(word);
+				string stem = word;
+				IEnumerable<int> types = null;
+				bool contains = Contains(word, out stem, out types);
+				
+				if (!contains)
 
-                foreach (Categories type in availableTypes) {
+					throw new Exception(String.Format("Encountered word not in lexicon: {0}", word));
+
+                foreach (int type in types) {
                     chain.Add(new ParseNode(type, word));
                     Chunk(words, chain, output);
                     chain.RemoveAt(chain.Count - 1);

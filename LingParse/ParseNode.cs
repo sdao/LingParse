@@ -11,23 +11,23 @@ namespace LingParse
 
         public static ParseNode EmptyParseNode() {
             if (_empty == null)
-                _empty = new ParseNode(Categories.None, null);
+                _empty = new ParseNode(SyntaxCategories.SYNTAX_CATEGORY_EMPTY, null);
             return _empty;
         }
 
-        public ParseNode(Categories u, string term)
+        public ParseNode(int u, string term)
         {
             Type = u;
             Value = term;
         }
 
-        public ParseNode(Categories u, string term, ParseNode l, ParseNode r) : this(u, term)
+        public ParseNode(int u, string term, ParseNode l, ParseNode r) : this(u, term)
         {
             Left = l;
             Right = r;
         }
 
-        public Categories Type
+        public int Type
         {
             get;
             private set;
@@ -58,21 +58,21 @@ namespace LingParse
 
         public override string ToString()
         {
-            if (Type == Categories.None)
+            if (Type == SyntaxCategories.SYNTAX_CATEGORY_EMPTY)
             {
-                return "-";
+                return SyntaxCategories.DefaultSyntaxCategories.NameForIndex(SyntaxCategories.SYNTAX_CATEGORY_EMPTY);
             }
             else if (Value != null)
             {
-                return String.Format("{0}:\t{1}", Grammar.NameForUnit(Type), Value);
+                return String.Format("{0}:\t{1}", SyntaxCategories.DefaultSyntaxCategories.NameForIndex(Type), Value);
             }
-            else if (Right != null && Right.Type != Categories.None)
+            else if (Right != null && Right.Type != SyntaxCategories.SYNTAX_CATEGORY_EMPTY)
             {
-                return String.Format("{0} ->\n\t{1}\n\t{2}", Grammar.NameForUnit(Type), Left.ToString().Replace("\n", "\n\t"), Right.ToString().Replace("\n", "\n\t"));
+                return String.Format("{0} ->\n\t{1}\n\t{2}", SyntaxCategories.DefaultSyntaxCategories.NameForIndex(Type), Left.ToString().Replace("\n", "\n\t"), Right.ToString().Replace("\n", "\n\t"));
             }
             else
             {
-                return String.Format("{0} ->\n\t{1}", Grammar.NameForUnit(Type), Left.ToString().Replace("\n", "\n\t"));
+                return String.Format("{0} ->\n\t{1}", SyntaxCategories.DefaultSyntaxCategories.NameForIndex(Type), Left.ToString().Replace("\n", "\n\t"));
             }
         }
 
