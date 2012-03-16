@@ -38,6 +38,8 @@ namespace LingParse
 					Console.WriteLine();
             	}
 			}
+			if (count == 0)
+				Console.WriteLine("--NO OUTPUT--");
 
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey();

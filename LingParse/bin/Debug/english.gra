@@ -8,3 +8,15 @@ VP -> V -
 VP -> V NP
 VP -> VP PP
 S -> NP VP
+S -> Adv S
+VP -> Adv VP
+VP -> VP Adv
+
+NP -> NP CoordP(NP)
+CoordP(NP) -> Coord NP
+VP -> VP CoordP(VP)
+CoordP(VP) -> Coord VP
+PP -> PP CoordP(PP)
+CoordP(PP) -> Coord PP
+S -> S CoordP(S)
+CoordP(S) -> Coord S

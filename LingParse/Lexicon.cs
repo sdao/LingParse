@@ -1,3 +1,5 @@
+//#define ERROR_ON_BAD_CATEGORY
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,8 +50,9 @@ namespace LingParse
 								if (category > SyntaxCategories.SYNTAX_CATEGORY_NOT_IMPLEMENTED)
 									Add (components[0], category);
 								
-								if (category == -1 && x != SyntaxCategories.SYNTAX_FILE_EXCLUDE)
+#if ERROR_ON_BAD_CATEGORY
 									throw new FormatException(String.Format ("Category name is not valid with current SyntaxCategories. Line: {0}; Name: {1}", line, x));
+#endif
 							}
 						}
 						else
@@ -210,43 +213,36 @@ namespace LingParse
             }
         }
 
-        public bool Contains(string t, out string stem, out IEnumerable<int> types)
+        public bool Contains(string t, out HashSet<int> types)
         {
             string term = t.ToUpper();
-			stem = null;
-			types = null;
+			types = new HashSet<int>();
 			
 			if (Contains(term)) {
-				stem = term;
-				types = GetTypes(term);
-				return true;
+				types.UnionWith(GetTypes(term));
 			}
 			
             foreach (string prefix in MorphologyPrefixes.Keys) {
 				if (term.StartsWith (prefix) && term.Length > prefix.Length) {
-					stem = term.Substring (prefix.Length);
+					string stem = term.Substring (prefix.Length);
 					
 					if (Contains(stem)) {
-						types = MorphologyPrefixes[prefix].Intersect(Library[stem]);
-						foreach (int x in types)
-							return true;
+						types.UnionWith(MorphologyPrefixes[prefix].Intersect(Library[stem]));
 					}
 				}
 			}
 			
 			foreach (string suffix in MorphologySuffixes.Keys) {
 				if (term.EndsWith(suffix) && term.Length > suffix.Length) {
-					stem = term.Substring(0, term.Length - suffix.Length);
+					string stem = term.Substring(0, term.Length - suffix.Length);
 					
 					if (Contains(stem)) {
-						types = MorphologySuffixes[suffix].Intersect(Library[stem]);
-						foreach (int x in types)
-							return true;
+						types.UnionWith(MorphologySuffixes[suffix].Intersect(Library[stem]));
 					}
 				}
 			}
 			
-			return false;
+			return types.Count > 0;
         }
 		
 		public bool Contains(string t) {
@@ -286,12 +282,10 @@ namespace LingParse
             else
             {
                 string word = words[chain.Count];
-				string stem = word;
-				IEnumerable<int> types = null;
-				bool contains = Contains(word, out stem, out types);
+				HashSet<int> types = null;
+				bool contains = Contains(word, out types);
 				
 				if (!contains)
-
 					throw new Exception(String.Format("Encountered word not in lexicon: {0}", word));
 
                 foreach (int type in types) {

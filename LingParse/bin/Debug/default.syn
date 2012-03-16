@@ -1,4 +1,3 @@
-*NOT*IMPLEMENTED* : t i v C ! o
 - : -
 S : S
 N : N p r
@@ -10,3 +9,9 @@ NP : NP h
 VP : VP
 PP : PP
 N' : N'
+Coord : Coord C
+CoordP(NP) : CoordP(NP)
+CoordP(VP) : CoordP(VP)
+CoordP(PP) : CoordP(PP)
+CoordP(S) : CoordP(S)
+Adv : Adv v

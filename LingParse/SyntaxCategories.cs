@@ -19,10 +19,10 @@ namespace LingParse
 		 * 
 		 * **/
 		
-		public const int SYNTAX_CATEGORY_NOT_IMPLEMENTED = 0;
-		public const int SYNTAX_CATEGORY_EMPTY = 1;
-		public const int SYNTAX_CATEGORY_FULL = 2;
-		public const string SYNTAX_FILE_EXCLUDE = "|";
+		public const int SYNTAX_CATEGORY_NOT_IMPLEMENTED = -1;
+		public const int SYNTAX_CATEGORY_EMPTY = 0;
+		public const int SYNTAX_CATEGORY_FULL = 1;
+		
 		
 		public static void LoadSyntaxCategories(string filename)
 		{

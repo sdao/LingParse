@@ -1,6 +1,26 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
-  <MonoDevelop.Ide.Workbench />
+  <MonoDevelop.Ide.Workbench ActiveDocument="LingParse/english.gra">
+    <Files>
+      <File FileName="LingParse/Lexicon.cs" Line="288" Column="19" />
+      <File FileName="LingParse/SyntaxCategories.cs" Line="25" Column="3" />
+      <File FileName="LingParse/Main.cs" Line="20" Column="1" />
+      <File FileName="LingParse/english.gra" Line="13" Column="13" />
+      <File FileName="LingParse/default.syn" Line="13" Column="24" />
+      <File FileName="LingParse/english.lem" Line="4" Column="6" />
+      <File FileName="LingParse/Grammar.cs" Line="43" Column="1" />
+      <File FileName="LingParse/english.lex" Line="219987" Column="6" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="LingParse" expanded="True">
+            <Node name="english.gra" selected="True" />
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
